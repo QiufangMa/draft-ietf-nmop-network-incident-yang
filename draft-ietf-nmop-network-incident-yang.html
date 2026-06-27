@@ -2174,7 +2174,9 @@ corresponds to node defined in the network topology model and network
 resource in the network device, e.g., interface.  In addition, "ietf-incident"
 supports one general notification to report network incident state changes and
 three rpcs to manage the network incidents.<a href="#section-7.1-2" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-7.1-3">
+<span id="name-incident-yang-tree-diagram"></span><div id="incident-tree">
+<figure id="figure-7">
+          <div class="alignCenter art-text artwork" id="section-7.1-3.1">
 <pre>
 module: ietf-incident
   +--ro incidents
@@ -2182,7 +2184,7 @@ module: ietf-incident
         +--ro incident-no         uint64
         +--ro name                string
         +--ro type                identityref
-        +--ro incident-id?        string
+        +--ro incident-id         string
         +--ro service-instance*   string
         +--ro domain              identityref
         +--ro priority            incident-priority
@@ -2192,32 +2194,101 @@ module: ietf-incident
         +--ro detail?             string
         +--ro resolve-advice?     string
         +--ro sources
-        ...
+        |  +--ro source* [node-ref]
+        |     +--ro node-ref       -&gt; /nw:networks/network[nw:network-id=current()/../network-ref]/node/node-id
+        |     +--ro network-ref?   -&gt; /nw:networks/network/network-id
+        |     +--ro resource* [name]
+        |        +--ro name    al:resource
         +--ro probable-causes
-        ...
+        |  +--ro probable-cause* [node-ref]
+        |     +--ro node-ref       -&gt; /nw:networks/network[nw:network-id=current()/../network-ref]/node/node-id
+        |     +--ro network-ref?   -&gt; /nw:networks/network/network-id
+        |     +--ro resource* [name]
+        |     |  +--ro name          al:resource
+        |     |  +--ro cause-name?   identityref
+        |     |  +--ro detail?       string
+        |     +--ro cause-name?    identityref
+        |     +--ro detail?        string
         +--ro probable-events
-        ...
+        |  +--ro probable-event* [type event-id]
+        |     +--ro type        -&gt; ../../../events/event/type
+        |     +--ro event-id    -&gt; ../../../events/event[type = current()/../type]/event-id
         +--ro events
-        ...
-        +--ro raise-time? yang:date-and-time
-        +--ro occur-time? yang:date-and-time
-        +--ro clear-time? yang:date-and-time
-        +--ro ack-time? yang:date-and-time
-        +--ro last-updated? yang:date-and-time
-rpcs:
-  +---x incident-acknowledge
-  ...
-  +---x incident-diagnose
-  ...
-  +---x incident-resolve
+        |  +--ro event* [type event-id]
+        |     +--ro type           identityref
+        |     +--ro event-id       string
+        |     +--ro (event-type-info)?
+        |        +--:(alarm)
+        |           +--ro alarm
+        |              +--ro resource?               -&gt; /al:alarms/alarm-list/alarm/resource
+        |              +--ro alarm-type-id?          -&gt; /al:alarms/alarm-list/alarm[al:resource = current()/../resource]/alarm-type-id
+        |              +--ro alarm-type-qualifier?   -&gt; /al:alarms/alarm-list/alarm[al:resource = current()/../resource][al:alarm-type-id = current()/../alarm-type-id]/al:alarm-type-qualifier
+        +--ro raise-time?         yang:date-and-time
+        +--ro occur-time?         yang:date-and-time
+        +--ro clear-time?         yang:date-and-time
+        +--ro ack-time?           yang:date-and-time
+        +--ro last-updated?       yang:date-and-time
 
-notifications:
-  +---n incident-notification
-         +--ro incident-no?
-                         -&gt; /inc:incidents/inc:incident/inc:incident-no
-         ...
-         +--ro time? yang:date-and-time
-</pre><a href="#section-7.1-3" class="pilcrow">¶</a>
+  rpcs:
+    +---x incident-acknowledge
+    |  +---w input
+    |     +---w incident-no*   incident-ref
+    +---x incident-diagnose
+    |  +---w input
+    |     +---w incident-no*   incident-ref
+    +---x incident-resolve
+       +---w input
+          +---w incident-no*   incident-ref
+
+  notifications:
+    +---n incident-notification
+       +--ro incident-no         incident-ref
+       +--ro name?               string
+       +--ro type?               identityref
+       +--ro incident-id?        string
+       +--ro service-instance*   string
+       +--ro domain              identityref
+       +--ro priority            incident-priority
+       +--ro status?             enumeration
+       +--ro ack-status?         enumeration
+       +--ro category            identityref
+       +--ro detail?             string
+       +--ro resolve-advice?     string
+       +--ro sources
+       |  +--ro source* [node-ref]
+       |     +--ro node-ref       -&gt; /nw:networks/network[nw:network-id=current()/../network-ref]/node/node-id
+       |     +--ro network-ref?   -&gt; /nw:networks/network/network-id
+       |     +--ro resource* [name]
+       |        +--ro name    al:resource
+       +--ro probable-causes
+       |  +--ro probable-cause* [node-ref]
+       |     +--ro node-ref       -&gt; /nw:networks/network[nw:network-id=current()/../network-ref]/node/node-id
+       |     +--ro network-ref?   -&gt; /nw:networks/network/network-id
+       |     +--ro resource* [name]
+       |     |  +--ro name          al:resource
+       |     |  +--ro cause-name?   identityref
+       |     |  +--ro detail?       string
+       |     +--ro cause-name?    identityref
+       |     +--ro detail?        string
+       +--ro probable-events
+       |  +--ro probable-event* [type event-id]
+       |     +--ro type        -&gt; ../../../events/event/type
+       |     +--ro event-id    -&gt; ../../../events/event[type = current()/../type]/event-id
+       +--ro events
+       |  +--ro event* [type event-id]
+       |     +--ro type           identityref
+       |     +--ro event-id       string
+       |     +--ro (event-type-info)?
+       |        +--:(alarm)
+       |           +--ro alarm
+       |              +--ro resource?               -&gt; /al:alarms/alarm-list/alarm/resource
+       |              +--ro alarm-type-id?          -&gt; /al:alarms/alarm-list/alarm[al:resource = current()/../resource]/alarm-type-id
+       |              +--ro alarm-type-qualifier?   -&gt; /al:alarms/alarm-list/alarm[al:resource = current()/../resource][al:alarm-type-id = current()/../alarm-type-id]/al:alarm-type-qualifier
+</pre>
+</div>
+<figcaption><a href="#figure-7" class="selfRef">Figure 7</a>:
+<a href="#name-incident-yang-tree-diagram" class="selfRef">Incident YANG Tree Diagram</a>
+          </figcaption></figure>
 </div>
 </section>
 </div>
@@ -2230,9 +2301,9 @@ notifications:
 <pre>
 notifications:
   +---n incident-notification
-     +--ro incident-no?        incident-ref
-     +--ro name                string
-     +--ro type                identityref
+     +--ro incident-no         incident-ref
+     +--ro name?               string
+     +--ro type?               identityref
      +--ro incident-id?        string
      +--ro service-instance*   string
      +--ro domain              identityref
@@ -2362,7 +2433,7 @@ process, a notification update will be triggered.<a href="#section-7.5-3" class=
 <p id="section-7.6-1">If the RPC fails, the RPC error response <span class="bcp14">MUST</span> indicate the reason for the
 failure. The structures defined in this document <span class="bcp14">MUST</span> encode specific errors
 and be inserted in the error response to indicate the reason for the failure.<a href="#section-7.6-1" class="pilcrow">¶</a></p>
-<p id="section-7.6-2">The tree diagram [RFC8340] for structures is defined as follows:<a href="#section-7.6-2" class="pilcrow">¶</a></p>
+<p id="section-7.6-2">The tree diagram <span>[<a href="#RFC8340" class="cite xref">RFC8340</a>]</span> for structures is defined as follows:<a href="#section-7.6-2" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-7.6-3">
 <pre>
   structure incident-acknowledge-error-info:
@@ -3439,6 +3510,10 @@ for their valuable comments and great input to this work.<a href="#section-11-1"
         <dd>
 <span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="RFC8340">[RFC8340]</dt>
+        <dd>
+<span class="refAuthor">Bjorklund, M.</span> and <span class="refAuthor">L. Berger, Ed.</span>, <span class="refTitle">"YANG Tree Diagrams"</span>, <span class="seriesInfo">BCP 215</span>, <span class="seriesInfo">RFC 8340</span>, <span class="seriesInfo">DOI 10.17487/RFC8340</span>, <time datetime="2018-03" class="refDate">March 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8340">https://www.rfc-editor.org/rfc/rfc8340</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC8341">[RFC8341]</dt>
         <dd>
 <span class="refAuthor">Bierman, A.</span> and <span class="refAuthor">M. Bjorklund</span>, <span class="refTitle">"Network Configuration Access Control Model"</span>, <span class="seriesInfo">STD 91</span>, <span class="seriesInfo">RFC 8341</span>, <span class="seriesInfo">DOI 10.17487/RFC8341</span>, <time datetime="2018-03" class="refDate">March 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8341">https://www.rfc-editor.org/rfc/rfc8341</a>&gt;</span>. </dd>
@@ -3649,7 +3724,7 @@ gathering and analysis from many different tools from the controllers,
 therefore correlation between troubleshooting ticket and network incident
 becomes necessary.<a href="#appendix-A.2-2" class="pilcrow">¶</a></p>
 <span id="name-correlation-with-troublesho"></span><div id="exam3">
-<figure id="figure-7">
+<figure id="figure-8">
           <div class="alignCenter art-text artwork" id="appendix-A.2-3.1">
 <pre>
 +------------------------------------------------+
@@ -3674,7 +3749,7 @@ becomes necessary.<a href="#appendix-A.2-2" class="pilcrow">¶</a></p>
 +------------------------------------------------+
 </pre>
 </div>
-<figcaption><a href="#figure-7" class="selfRef">Figure 7</a>:
+<figcaption><a href="#figure-8" class="selfRef">Figure 8</a>:
 <a href="#name-correlation-with-troublesho" class="selfRef">Correlation with troubleshooting tickets</a>
           </figcaption></figure>
 </div>
@@ -3858,7 +3933,7 @@ associated with transmission path (current path, historical path) to the base st
 current and historical network performance, netowrk resources, and incident status data, to
 diagnose the Probable Root Cause of the network incident and provide repair suggestions.<a href="#appendix-A.4-1" class="pilcrow">¶</a></p>
 <span id="name-multi-domain-fault-demarcati"></span><div id="exam4">
-<figure id="figure-8">
+<figure id="figure-9">
           <div class="alignCenter art-text artwork" id="appendix-A.4-2.1">
 <pre>
  +------------------------------------------------+
@@ -3896,7 +3971,7 @@ related-objects? leafref //List &lt;ResourceObject&gt;
 
 </pre>
 </div>
-<figcaption><a href="#figure-8" class="selfRef">Figure 8</a>:
+<figcaption><a href="#figure-9" class="selfRef">Figure 9</a>:
 <a href="#name-multi-domain-fault-demarcati" class="selfRef">Multi-Domain Fault Demarcation</a>
           </figcaption></figure>
 </div>
@@ -3908,7 +3983,7 @@ related-objects? leafref //List &lt;ResourceObject&gt;
 <a href="#appendix-A.5" class="section-number selfRef">A.5. </a><a href="#name-service-complaint-triggered" class="section-name selfRef">Service Complaint triggered Network Diagnosis</a>
         </h3>
 <span id="name-service-complaint-triggered-"></span><div id="exam5">
-<figure id="figure-9">
+<figure id="figure-10">
           <div class="alignCenter art-text artwork" id="appendix-A.5-1.1">
 <pre>
                                    Customer
@@ -3937,7 +4012,7 @@ related-objects? leafref //List &lt;ResourceObject&gt;
                            IP Autonomous Domain
 </pre>
 </div>
-<figcaption><a href="#figure-9" class="selfRef">Figure 9</a>:
+<figcaption><a href="#figure-10" class="selfRef">Figure 10</a>:
 <a href="#name-service-complaint-triggered-" class="selfRef">Service Complaint triggered Network Diagnosis</a>
           </figcaption></figure>
 </div>

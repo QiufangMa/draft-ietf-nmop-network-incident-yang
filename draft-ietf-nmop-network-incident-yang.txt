@@ -877,55 +877,122 @@ Table of Contents
    notification to report network incident state changes and three rpcs
    to manage the network incidents.
 
- module: ietf-incident
-   +--ro incidents
-      +--ro incident* [name type incident-id]
-         +--ro incident-no         uint64
-         +--ro name                string
-         +--ro type                identityref
-         +--ro incident-id?        string
-         +--ro service-instance*   string
-         +--ro domain              identityref
-         +--ro priority            incident-priority
-         +--ro status?             enumeration
-         +--ro ack-status?         enumeration
-         +--ro category            identityref
-         +--ro detail?             string
-         +--ro resolve-advice?     string
-         +--ro sources
-         ...
-         +--ro probable-causes
-         ...
-         +--ro probable-events
-         ...
-         +--ro events
-         ...
-         +--ro raise-time? yang:date-and-time
-         +--ro occur-time? yang:date-and-time
-         +--ro clear-time? yang:date-and-time
-         +--ro ack-time? yang:date-and-time
-         +--ro last-updated? yang:date-and-time
- rpcs:
-   +---x incident-acknowledge
-   ...
-   +---x incident-diagnose
-   ...
-   +---x incident-resolve
+module: ietf-incident
+  +--ro incidents
+     +--ro incident* [name type incident-id]
+        +--ro incident-no         uint64
+        +--ro name                string
+        +--ro type                identityref
+        +--ro incident-id         string
+        +--ro service-instance*   string
+        +--ro domain              identityref
+        +--ro priority            incident-priority
+        +--ro status?             enumeration
+        +--ro ack-status?         enumeration
+        +--ro category            identityref
+        +--ro detail?             string
+        +--ro resolve-advice?     string
+        +--ro sources
+        |  +--ro source* [node-ref]
+        |     +--ro node-ref       -> /nw:networks/network[nw:network-id=current()/../network-ref]/node/node-id
+        |     +--ro network-ref?   -> /nw:networks/network/network-id
+        |     +--ro resource* [name]
+        |        +--ro name    al:resource
+        +--ro probable-causes
+        |  +--ro probable-cause* [node-ref]
+        |     +--ro node-ref       -> /nw:networks/network[nw:network-id=current()/../network-ref]/node/node-id
+        |     +--ro network-ref?   -> /nw:networks/network/network-id
+        |     +--ro resource* [name]
+        |     |  +--ro name          al:resource
+        |     |  +--ro cause-name?   identityref
+        |     |  +--ro detail?       string
+        |     +--ro cause-name?    identityref
+        |     +--ro detail?        string
+        +--ro probable-events
+        |  +--ro probable-event* [type event-id]
+        |     +--ro type        -> ../../../events/event/type
+        |     +--ro event-id    -> ../../../events/event[type = current()/../type]/event-id
+        +--ro events
+        |  +--ro event* [type event-id]
+        |     +--ro type           identityref
+        |     +--ro event-id       string
+        |     +--ro (event-type-info)?
+        |        +--:(alarm)
+        |           +--ro alarm
+        |              +--ro resource?               -> /al:alarms/alarm-list/alarm/resource
+        |              +--ro alarm-type-id?          -> /al:alarms/alarm-list/alarm[al:resource = current()/../resource]/alarm-type-id
+        |              +--ro alarm-type-qualifier?   -> /al:alarms/alarm-list/alarm[al:resource = current()/../resource][al:alarm-type-id = current()/../alarm-type-id]/al:alarm-type-qualifier
+        +--ro raise-time?         yang:date-and-time
+        +--ro occur-time?         yang:date-and-time
+        +--ro clear-time?         yang:date-and-time
+        +--ro ack-time?           yang:date-and-time
+        +--ro last-updated?       yang:date-and-time
 
- notifications:
-   +---n incident-notification
-          +--ro incident-no?
-                          -> /inc:incidents/inc:incident/inc:incident-no
-          ...
-          +--ro time? yang:date-and-time
+  rpcs:
+    +---x incident-acknowledge
+    |  +---w input
+    |     +---w incident-no*   incident-ref
+    +---x incident-diagnose
+    |  +---w input
+    |     +---w incident-no*   incident-ref
+    +---x incident-resolve
+       +---w input
+          +---w incident-no*   incident-ref
+
+  notifications:
+    +---n incident-notification
+       +--ro incident-no         incident-ref
+       +--ro name?               string
+       +--ro type?               identityref
+       +--ro incident-id?        string
+       +--ro service-instance*   string
+       +--ro domain              identityref
+       +--ro priority            incident-priority
+       +--ro status?             enumeration
+       +--ro ack-status?         enumeration
+       +--ro category            identityref
+       +--ro detail?             string
+       +--ro resolve-advice?     string
+       +--ro sources
+       |  +--ro source* [node-ref]
+       |     +--ro node-ref       -> /nw:networks/network[nw:network-id=current()/../network-ref]/node/node-id
+       |     +--ro network-ref?   -> /nw:networks/network/network-id
+       |     +--ro resource* [name]
+       |        +--ro name    al:resource
+       +--ro probable-causes
+       |  +--ro probable-cause* [node-ref]
+       |     +--ro node-ref       -> /nw:networks/network[nw:network-id=current()/../network-ref]/node/node-id
+       |     +--ro network-ref?   -> /nw:networks/network/network-id
+       |     +--ro resource* [name]
+       |     |  +--ro name          al:resource
+       |     |  +--ro cause-name?   identityref
+       |     |  +--ro detail?       string
+       |     +--ro cause-name?    identityref
+       |     +--ro detail?        string
+       +--ro probable-events
+       |  +--ro probable-event* [type event-id]
+       |     +--ro type        -> ../../../events/event/type
+       |     +--ro event-id    -> ../../../events/event[type = current()/../type]/event-id
+       +--ro events
+       |  +--ro event* [type event-id]
+       |     +--ro type           identityref
+       |     +--ro event-id       string
+       |     +--ro (event-type-info)?
+       |        +--:(alarm)
+       |           +--ro alarm
+       |              +--ro resource?               -> /al:alarms/alarm-list/alarm/resource
+       |              +--ro alarm-type-id?          -> /al:alarms/alarm-list/alarm[al:resource = current()/../resource]/alarm-type-id
+       |              +--ro alarm-type-qualifier?   -> /al:alarms/alarm-list/alarm[al:resource = current()/../resource][al:alarm-type-id = current()/../alarm-type-id]/al:alarm-type-qualifier
+
+                 Figure 7: Incident YANG Tree Diagram
 
 7.2.  Incident Notifications
 
    notifications:
      +---n incident-notification
-        +--ro incident-no?        incident-ref
-        +--ro name                string
-        +--ro type                identityref
+        +--ro incident-no         incident-ref
+        +--ro name?               string
+        +--ro type?               identityref
         +--ro incident-id?        string
         +--ro service-instance*   string
         +--ro domain              identityref
@@ -2081,6 +2148,10 @@ Normative References
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
 
+   [RFC8340]  Bjorklund, M. and L. Berger, Ed., "YANG Tree Diagrams",
+              BCP 215, RFC 8340, DOI 10.17487/RFC8340, March 2018,
+              <https://www.rfc-editor.org/rfc/rfc8340>.
+
    [RFC8341]  Bierman, A. and M. Bjorklund, "Network Configuration
               Access Control Model", STD 91, RFC 8341,
               DOI 10.17487/RFC8341, March 2018,
@@ -2327,7 +2398,7 @@ A.2.  Network Incident Correlated with Trouble Tickets
         |   +----------------------------------------+   |
         +------------------------------------------------+
 
-             Figure 7: Correlation with troubleshooting tickets
+             Figure 8: Correlation with troubleshooting tickets
 
    In order to manage the correlation between network incidents and
    trouble tickets in the YANG data model, three RPCs to manage the
@@ -2534,7 +2605,7 @@ A.4.  Multi-Domain Fault Demarcation with Network Incident Management
             ....
            }
 
-                  Figure 8: Multi-Domain Fault Demarcation
+                  Figure 9: Multi-Domain Fault Demarcation
 
 A.5.  Service Complaint triggered Network Diagnosis
 
@@ -2563,7 +2634,7 @@ A.5.  Service Complaint triggered Network Diagnosis
 
                                    IP Autonomous Domain
 
-          Figure 9: Service Complaint triggered Network Diagnosis
+          Figure 10: Service Complaint triggered Network Diagnosis
 
    Similarly, in case of service degradation for a lease line service
    recieving from the customer, the OSS system can request network
